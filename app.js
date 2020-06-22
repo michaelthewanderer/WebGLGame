@@ -87,19 +87,45 @@ window.addEventListener("DOMContentLoaded", event=>{
         console.error("ERROR validating program!", gl.getProgramInfoLog(program));
         return;
     }
+    
 
-    let box = new Cube([3,0,0], 1);
+    //let box = new Cube([0,0,0], 10);
+
+    let boxArray = [];
+    let boxVerts = [];
+    let boxInds = [];
+
+    for (let i = 0; i < 8; i++){
+        
+        for (let j = 0; j < 8; j++){
+            boxArray.push(new Cube([i, j, 0], 1));
+        }
+    }
 
     
+
+    boxArray.forEach(box=>{
+  
+        box.vertices.forEach(vert=>{
+            boxVerts.push(vert);
+        })
+        box.indices.forEach(ind=>{
+            boxInds.push(ind);
+        })
+    })
+
+    console.log(boxInds.length);
     
     let boxVertexBufferObject = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, boxVertexBufferObject);
     //TODO change static draw to dynamic draw
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array (box.vertices), gl.STATIC_DRAW);
+    //gl.bufferData(gl.ARRAY_BUFFER, new Float32Array (box.vertices), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array (boxVerts), gl.STATIC_DRAW);
 
     let boxIndexBufferObject = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, boxIndexBufferObject);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(box.indices), gl.STATIC_DRAW);
+    // gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(box.indices), gl.STATIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(boxInds), gl.STATIC_DRAW);
 
     let positionAttribLocation = gl.getAttribLocation(program, 'vertPosition');
     let colorAttribLocation = gl.getAttribLocation(program, "vertColor");
@@ -161,18 +187,19 @@ window.addEventListener("DOMContentLoaded", event=>{
     var loop = function(){
         
         angle = performance.now() / 1000 / 6 * 2 * Math.PI;
-        glTranslatef(-box.x,-box.y,-box.z)
+        //glTranslatef(-box.x,-box.y,-box.z)
         glMatrix.mat4.rotate(xRotationMatrix, identityMatrix, angle, [0,1,0]);
         glMatrix.mat4.rotate(yRotationMatrix, identityMatrix, angle, [1,0,0]);
+        glMatrix.mat4.translate(translationMatrix, identityMatrix, [0, 1, 0])
+        
+        //glMatrix.mat4.mul(worldMatrix, worldMatrix, translationMatrix);
         glMatrix.mat4.mul(worldMatrix, xRotationMatrix, yRotationMatrix);
-        //let translation = gl.getUniformLocation(program, 'translation');
-        //gl.uniform4f(translation, -box.x, box.y, box.z, 0.0);
-
-        //gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
+     
+        gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
 
         gl.clearColor(bgCol.r, bgCol.g, bgCol.b, bgCol.a);
         gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
-        gl.drawElements(gl.TRIANGLES, box.indices.length,  gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, boxInds.length,  gl.UNSIGNED_SHORT, 0);
 
         requestAnimationFrame(loop);
 
